@@ -1,9 +1,7 @@
-package com.example.calender.entity;
+package com.example.calender.models;
 
 import lombok.Builder;
 import lombok.Data;
-
-import java.time.temporal.Temporal;
 
 @Data
 @Builder

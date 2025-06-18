@@ -1,0 +1,58 @@
+[
+  {
+    "roomName": "P101",
+    "location": "Tầng 1, Khu A",
+    "capacity": 20,
+    "amenities": "Projector, Whiteboard, WiFi",
+    "status": "available"
+  },
+  {
+    "roomName": "P102",
+    "location": "Tầng 1, Khu A",
+    "capacity": 15,
+    "amenities": "Whiteboard, WiFi",
+    "status": "available"
+  },
+  {
+    "roomName": "P201",
+    "location": "Tầng 2, Khu B",
+    "capacity": 30,
+    "amenities": "Projector, Whiteboard, WiFi, Video Conference",
+    "status": "booked"
+  },
+  {
+    "roomName": "P202",
+    "location": "Tầng 2, Khu B",
+    "capacity": 10,
+    "amenities": "Whiteboard",
+    "status": "maintenance"
+  },
+  {
+    "roomName": "P301",
+    "location": "Tầng 3, Khu C",
+    "capacity": 25,
+    "amenities": "Projector, Whiteboard, WiFi",
+    "status": "available"
+  },
+  {
+    "roomName": "P302",
+    "location": "Tầng 3, Khu C",
+    "capacity": 18,
+    "amenities": "Whiteboard, WiFi",
+    "status": "booked"
+  },
+  {
+    "roomName": "P401",
+    "location": "Tầng 4, Khu D",
+    "capacity": 40,
+    "amenities": "Projector, Whiteboard, WiFi, Video Conference",
+    "status": "available"
+  },
+  {
+    "roomName": "P402",
+    "location": "Tầng 4, Khu D",
+    "capacity": 12,
+    "amenities": "Whiteboard",
+    "status": "maintenance"
+  }
+]

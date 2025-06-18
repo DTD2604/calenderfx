@@ -1,11 +1,10 @@
 package com.example.calender.service;
 
 import com.example.calender.config.JsonFileManager;
-import com.example.calender.entity.BookRoom;
+import com.example.calender.models.BookRoom;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -61,25 +60,13 @@ public class TimeLineByDayService {
         jsonFileManager.saveToFile();
     }
 
-    public boolean updateEvent(BookRoom oldBookRoom, BookRoom newBookRoom) {
+    public void updateEvent(BookRoom oldBookRoom, BookRoom newBookRoom) {
         List<BookRoom> bookRooms = jsonFileManager.getEventList(BookRoom.class);
-        int index = -1;
-        for (int i = 0; i < bookRooms.size(); i++) {
-            if (bookRooms.get(i).getFullName().equals(oldBookRoom.getFullName()) &&
-                    bookRooms.get(i).getRoomName().equals(oldBookRoom.getRoomName()) &&
-                    bookRooms.get(i).getStartDate().equals(oldBookRoom.getStartDate()) &&
-                    bookRooms.get(i).getStartTime().equals(oldBookRoom.getStartTime())) {
-                index = i;
-                break;
-            }
-        }
-
+        int index = bookRooms.indexOf(oldBookRoom);
         if (index != -1) {
             bookRooms.set(index, newBookRoom);
             jsonFileManager.saveToFile();
-            return true;
         }
-        return false;
     }
 
     public boolean deleteEvent(BookRoom bookRoom) {
@@ -95,5 +82,12 @@ public class TimeLineByDayService {
             return true;
         }
         return false;
+    }
+
+    public List<BookRoom> getAllEventsByRoomName(String roomName) {
+        jsonFileManager.loadFromFile(BookRoom.class);
+        return jsonFileManager.getEventList(BookRoom.class).stream()
+                .filter(bookRoom -> bookRoom.getRoomName().equals(roomName))
+                .collect(Collectors.toList());
     }
 }

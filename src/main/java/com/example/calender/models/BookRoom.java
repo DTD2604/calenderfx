@@ -1,4 +1,4 @@
-package com.example.calender.entity;
+package com.example.calender.models;
 
 import lombok.Builder;
 import lombok.Data;

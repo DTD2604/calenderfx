@@ -1,6 +1,6 @@
 package com.example.calender.controller;
 
-import com.example.calender.entity.EventSchedule;
+import com.example.calender.models.EventSchedule;
 import com.example.calender.service.CalendarService;
 import com.example.calender.utils.FormatColor;
 import javafx.fxml.FXML;

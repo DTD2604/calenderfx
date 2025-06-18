@@ -1,8 +1,8 @@
 package com.example.calender.service;
 
 import com.example.calender.config.JsonFileManager;
-import com.example.calender.entity.EventSchedule;
-import com.example.calender.entity.Events;
+import com.example.calender.models.EventSchedule;
+import com.example.calender.models.Events;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 

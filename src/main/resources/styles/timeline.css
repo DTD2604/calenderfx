@@ -95,3 +95,13 @@
     -fx-min-width: 0;
     -fx-opacity: 0;
 }
+
+.right-border-bold {
+    -fx-border-color: transparent transparent transparent #000; /* chỉ border phải */
+    -fx-border-width: 0 3px 0 0; /* 3px cho border phải */
+}
+
+.table-view {
+    -fx-border-color: transparent transparent transparent #000;
+    -fx-border-width: 0 3px 0 0;
+}

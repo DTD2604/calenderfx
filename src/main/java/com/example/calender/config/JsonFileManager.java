@@ -1,6 +1,5 @@
 package com.example.calender.config;
 
-import com.example.calender.entity.EventSchedule;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
@@ -9,19 +8,13 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 public class JsonFileManager {
 
-    private static JsonFileManager instance;
-    public static JsonFileManager getInstance(String fileName) {
-        if (instance == null) {
-            instance = new JsonFileManager();
-        }
-        instance.setFilePath(fileName);
-        return instance;
-    }
+    private static final Map<String, JsonFileManager> INSTANCES = new HashMap<>();
     private static final String FILE_PATH = "./src/main/resources/data/";
     private final Gson gson = new GsonBuilder()
             .setPrettyPrinting()
@@ -38,11 +31,17 @@ public class JsonFileManager {
         return (List<T>) eventList;
     }
 
-    private String currentFilePath;
+    @Getter
+    private String filePath;
+    private JsonFileManager(String fileName) {
+        this.filePath = FILE_PATH + fileName;
+    }
+    public static synchronized JsonFileManager getInstance(String fileName) {
+        return INSTANCES.computeIfAbsent(fileName, JsonFileManager::new);
+    }
 
-    // Set the file path dynamically based on user selection
     public void setFilePath(String fileName) {
-        this.currentFilePath = FILE_PATH + fileName;
+        this.filePath = FILE_PATH + fileName;
     }
 
     // List all JSON files in the data directory
@@ -58,29 +57,10 @@ public class JsonFileManager {
         return fileNames;
     }
 
-    // Load data from the currently set file
-//    public void loadFromFile() {
-//        try {
-//            File file = new File(currentFilePath);
-//            if (!file.exists()) {
-//                eventList = new ArrayList<>();
-//                return;
-//            }
-//
-//            try (Reader reader = new FileReader(file)) {
-//                Type listType = new TypeToken<List<EventSchedule>>() {}.getType();
-//                eventList = gson.fromJson(reader, listType);
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            eventList = new ArrayList<>();
-//        }
-//    }
-
     // Load data from the currently set file with a generic type
     public <T> void loadFromFile(Class<T> type) {
         try {
-            File file = new File(currentFilePath);
+            File file = new File(filePath);
             if (!file.exists()) {
                 eventList = new ArrayList<T>();
                 return;
@@ -100,7 +80,7 @@ public class JsonFileManager {
     // Save data to the currently set file
     public void saveToFile() {
         try {
-            File file = new File(currentFilePath);
+            File file = new File(filePath);
 
             // Tạo thư mục cha nếu chưa tồn tại
             File parentDir = file.getParentFile();
@@ -118,4 +98,3 @@ public class JsonFileManager {
     }
 
 }
-

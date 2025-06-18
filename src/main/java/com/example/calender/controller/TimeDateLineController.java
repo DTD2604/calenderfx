@@ -1,11 +1,12 @@
 package com.example.calender.controller;
 
-import com.example.calender.entity.BookRoom;
-import com.example.calender.entity.Events;
+import com.example.calender.models.BookRoom;
+import com.example.calender.models.Room;
 import com.example.calender.service.TimeLineByDayService;
-import com.example.calender.service.TimeLineByHoursService;
+import com.example.calender.service.RoomService;
 import com.example.calender.utils.FormatColor;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -25,52 +26,50 @@ import javafx.scene.paint.Color;
 
 import java.net.URL;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class TimeDateLineController implements Initializable {
 
     // <editor-fold desc="Constants">
     private static final int HOURS_PER_DAY = 24;
-    private static final int DAYS_VISIBLE = 3;
     private static final double CELL_WIDTH = 200.0;
-    private static final double ROW_HEIGHT = 29.0;
-    private static final double MINUTES_PER_PIXEL = 60.0 / CELL_WIDTH; // Số phút trên mỗi pixel
+    private static final double ROW_HEIGHT = 25.0;
     private static final String HOVER_EVENT_COLOR = "#AA66CC";
 
     @FXML
     private TableView<BookRoom> timelineTable;
     @FXML
-    private TableView<BookRoom> eventNameTable;
+    private TableView<Room> eventNameTable;
     @FXML
-    private TableColumn<BookRoom, String> nameEvent;
+    private TableColumn<Room, String> nameEvent;
     @FXML
-    private TableColumn<BookRoom, Number> sttColumn;
+    private TableColumn<Room, Number> sttColumn;
     @FXML
     private DatePicker dateBox;
     @FXML
-    private Button prevBtn, nextBtn, updateBtn, addBtn, deleteBtn;
+    private Button prevBtn, deleteBtn, addBtn, updateBtn, nextBtn, dayBtn, weekBtn, monthBtn;
     @FXML
     private Pane overlayPane;
     @FXML
     private ScrollPane scrollPane;
 
     private final ObservableList<BookRoom> eventsList = FXCollections.observableArrayList();
-    private LocalDate timelineStartDate;
+    private final ObservableList<Room> roomList = FXCollections.observableArrayList();
+    private LocalDate timelineStartDate = LocalDate.now();
 
-    // Biến cờ để ngăn các vòng lặp cập nhật vô hạn khi đồng bộ hóa thanh cuộn
+    // Prevent infinite update loops when syncing scrollbars
     private boolean isHorizontallySyncing = false;
 
-    private final TimeLineByDayService timeLineByHoursService = TimeLineByDayService.getInstance();
+    private final TimeLineByDayService timeLineByDayService = TimeLineByDayService.getInstance();
+    private final RoomService roomService = RoomService.getInstance();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        this.timelineStartDate = LocalDate.now();
-
         configureControls();
         loadEvents();
         setupTables();
@@ -82,11 +81,12 @@ public class TimeDateLineController implements Initializable {
     }
 
     private void loadEvents() {
-        eventsList.setAll(timeLineByHoursService.getAllEvents());
+        eventsList.setAll(timeLineByDayService.getAllEvents());
+        roomList.setAll(roomService.getAllRooms());
     }
 
     /**
-     * Cấu hình các điều khiển chính như nút và DatePicker.
+     * Cấu hình các điều khiển chính
      */
     private void configureControls() {
         dateBox.setValue(timelineStartDate);
@@ -111,10 +111,50 @@ public class TimeDateLineController implements Initializable {
                 refreshTimelineView();
             }
         });
+        // Add navigation for day/week/month buttons
+        dayBtn.setOnAction(e -> switchToDayView());
+        weekBtn.setOnAction(e -> switchToWeekView());
+        monthBtn.setOnAction(e -> switchToMonthView());
+    }
+
+    private void switchToDayView() {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/example/calender/time_line_day.fxml"));
+            javafx.scene.Parent root = loader.load();
+            javafx.scene.Scene scene = new javafx.scene.Scene(root);
+            javafx.stage.Stage stage = (javafx.stage.Stage) dayBtn.getScene().getWindow();
+            stage.setScene(scene);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void switchToWeekView() {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/example/calender/time_line.fxml"));
+            javafx.scene.Parent root = loader.load();
+            javafx.scene.Scene scene = new javafx.scene.Scene(root);
+            javafx.stage.Stage stage = (javafx.stage.Stage) weekBtn.getScene().getWindow();
+            stage.setScene(scene);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void switchToMonthView() {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/example/calender/calendar_view.fxml"));
+            javafx.scene.Parent root = loader.load();
+            javafx.scene.Scene scene = new javafx.scene.Scene(root);
+            javafx.stage.Stage stage = (javafx.stage.Stage) monthBtn.getScene().getWindow();
+            stage.setScene(scene);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     private void viewEventDetail(LocalDate today) {
-        List<BookRoom> events = timeLineByHoursService.getEventsByDate(today);
+        List<BookRoom> events = timeLineByDayService.getEventsByDate(today);
         if (events == null || events.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Thông báo");
@@ -123,31 +163,32 @@ public class TimeDateLineController implements Initializable {
             alert.showAndWait();
             return;
         }
-
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Chi tiết sự kiện ngày " + today);
-
-        // Buttons
         ButtonType closeButton = new ButtonType("Đóng", ButtonBar.ButtonData.CANCEL_CLOSE);
         ButtonType updateButton = new ButtonType("Cập nhật", ButtonBar.ButtonData.OK_DONE);
         ButtonType deleteButton = new ButtonType("Xóa", ButtonBar.ButtonData.APPLY);
         dialog.getDialogPane().getButtonTypes().addAll(updateButton, deleteButton, closeButton);
-
-        // Event List
         ListView<BookRoom> eventListView = new ListView<>(FXCollections.observableArrayList(events));
         eventListView.setCellFactory(param -> new ListCell<BookRoom>() {
             @Override
             protected void updateItem(BookRoom item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null
-                        : item.getFullName() + " (" + item.getStartDate() + " - " + item.getEndDate() + ")");
+                        : item.getRoomName() + " - " + item.getFullName() + " (" + item.getStartDate() + " - " + item.getEndDate() + ")");
             }
         });
-
-        // Detail form
         TextField nameField = new TextField();
+        TextField emailField = new TextField();
+        TextField phoneField = new TextField();
+        TextArea purposeArea = new TextArea();
+        ComboBox<String> statusComboBox = new ComboBox<>(FXCollections.observableArrayList("pending", "approved", "rejected"));
+        statusComboBox.getSelectionModel().select("pending");
+        ComboBox<String> roomComboBox = new ComboBox<>(FXCollections.observableArrayList(roomList.stream()
+                .map(Room::getRoomName)
+                .collect(Collectors.toList())));
         DatePicker startDatePicker = new DatePicker();
-        TextArea descriptionArea = new TextArea();
+        DatePicker endDatePicker = new DatePicker();
         ColorPicker colorPicker = new ColorPicker();
         Spinner<Integer> startHourSpinner = new Spinner<>(0, 23, 0);
         startHourSpinner.setPrefWidth(60);
@@ -161,28 +202,29 @@ public class TimeDateLineController implements Initializable {
         Spinner<Integer> endMinuteSpinner = new Spinner<>(0, 59, 0);
         endMinuteSpinner.setPrefWidth(60);
         endMinuteSpinner.setEditable(true);
-
         GridPane detailPane = new GridPane();
         detailPane.setHgap(10);
         detailPane.setVgap(10);
         detailPane.addRow(0, new Label("Tên sự kiện:"), nameField);
-        detailPane.addRow(1, new Label("Ngày bắt đầu:"), startDatePicker);
-        detailPane.addRow(2, new Label("Mô tả:"), descriptionArea);
-        detailPane.addRow(3, new Label("Màu sắc:"), colorPicker);
-        detailPane.addRow(4, new Label("Giờ bắt đầu:"),
-                new HBox(5, startHourSpinner, new Label(":"), startMinuteSpinner));
-        detailPane.addRow(5, new Label("Giờ kết thúc:"), new HBox(5, endHourSpinner, new Label(":"), endMinuteSpinner));
+        detailPane.addRow(1, new Label("Phòng:"), roomComboBox);
+        detailPane.addRow(2, new Label("Ngày bắt đầu:"), startDatePicker);
+        detailPane.addRow(2, new Label("Ngày kết thúc:"), endDatePicker);
+        detailPane.addRow(1, new Label("Email:"), emailField);
+        detailPane.addRow(2, new Label("Số điện thoại:"), phoneField);
+        detailPane.addRow(3, new Label("Mô tả:"), purposeArea);
+        detailPane.addRow(4, new Label("Màu sắc:"), colorPicker);
+        detailPane.addRow(6, new Label("Trạng thái:"), statusComboBox);
+        detailPane.addRow(5, new Label("Giờ bắt đầu:"), new HBox(5, startHourSpinner, new Label(":"), startMinuteSpinner));
+        detailPane.addRow(6, new Label("Giờ kết thúc:"), new HBox(5, endHourSpinner, new Label(":"), endMinuteSpinner));
 
-        // Binding event selection
-        // Disable Update/Delete when no selection
-        Node updateBtnNode = dialog.getDialogPane().lookupButton(updateButton);
         Node deleteBtnNode = dialog.getDialogPane().lookupButton(deleteButton);
+        Node updateBtnNode = dialog.getDialogPane().lookupButton(updateButton);
 
         Runnable updateUpdateButtonState = () -> {
-            boolean sHValid = validateAndStyleSpinner(startHourSpinner, 0, 23);
-            boolean sMValid = validateAndStyleSpinner(startMinuteSpinner, 0, 59);
-            boolean eHValid = validateAndStyleSpinner(endHourSpinner, 0, 23);
-            boolean eMValid = validateAndStyleSpinner(endMinuteSpinner, 0, 59);
+            boolean sHValid = validateAndStyleSpinner(startHourSpinner, 23);
+            boolean sMValid = validateAndStyleSpinner(startMinuteSpinner, 59);
+            boolean eHValid = validateAndStyleSpinner(endHourSpinner, 23);
+            boolean eMValid = validateAndStyleSpinner(endMinuteSpinner, 59);
 
             boolean allSpinnersAreIndividuallyValid = sHValid && sMValid && eHValid && eMValid;
 
@@ -220,12 +262,17 @@ public class TimeDateLineController implements Initializable {
         eventListView.getSelectionModel().selectedItemProperty().addListener((obs, oldEvent, newEvent) -> {
             if (newEvent != null) {
                 nameField.setText(newEvent.getFullName());
+                roomComboBox.setValue(newEvent.getRoomName());
+                emailField.setText(newEvent.getEmail());
+                phoneField.setText(newEvent.getPhoneNumber());
+                startDatePicker.setValue(LocalDate.parse(newEvent.getStartDate()));
+                endDatePicker.setValue(LocalDate.parse(newEvent.getEndDate()));
                 startDatePicker.setValue(LocalDate.parse(newEvent.getStartDate()));
                 startHourSpinner.getValueFactory().setValue(Integer.parseInt(newEvent.getStartTime().split(":")[0]));
                 startMinuteSpinner.getValueFactory().setValue(Integer.parseInt(newEvent.getStartTime().split(":")[1]));
-                endHourSpinner.getValueFactory().setValue(Integer.parseInt(newEvent.getEndDate().split(":")[0]));
-                endMinuteSpinner.getValueFactory().setValue(Integer.parseInt(newEvent.getEndDate().split(":")[1]));
-                descriptionArea.setText(newEvent.getPurpose());
+                endHourSpinner.getValueFactory().setValue(Integer.parseInt(newEvent.getEndTime().split(":")[0]));
+                endMinuteSpinner.getValueFactory().setValue(Integer.parseInt(newEvent.getEndTime().split(":")[1]));
+                purposeArea.setText(newEvent.getPurpose());
                 colorPicker.setValue(Color.web(newEvent.getColor()));
 
                 // After setting values, update the button state
@@ -233,9 +280,13 @@ public class TimeDateLineController implements Initializable {
 
             } else {
                 nameField.clear();
+                roomComboBox.getSelectionModel().clearSelection();
+                emailField.clear();
                 startDatePicker.setValue(null);
-                descriptionArea.clear();
+                endDatePicker.setValue(null);
+                phoneField.clear();
                 colorPicker.setValue(Color.WHITE);
+                purposeArea.clear();
                 startHourSpinner.getValueFactory().setValue(0);
                 startMinuteSpinner.getValueFactory().setValue(0);
                 endHourSpinner.getValueFactory().setValue(0);
@@ -283,28 +334,30 @@ public class TimeDateLineController implements Initializable {
                     alert.showAndWait();
                     return;
                 }
+
                 // Update event
                 // Calculate end date based on start and end time
                 LocalDate eventStartDate = startDatePicker.getValue();
-                LocalTime startTime = LocalTime.of(startHourSpinner.getValue(), startMinuteSpinner.getValue());
-                LocalTime endTime = LocalTime.of(endHourSpinner.getValue(), endMinuteSpinner.getValue());
-
-                LocalDate eventEndDate = eventStartDate;
-                if (endTime.isBefore(startTime)) {
-                    eventEndDate = eventStartDate.plusDays(1);
-                }
+                LocalDate eventEndDate = endDatePicker.getValue() != startDatePicker.getValue() ? endDatePicker.getValue() : eventStartDate;
 
                 BookRoom updatedEvent = BookRoom.builder()
                         .fullName(nameField.getText())
-                        .startDate(eventEndDate.toString())
-                        .startTime(
-                                String.format("%02d:%02d", startHourSpinner.getValue(), startMinuteSpinner.getValue()))
+                        .roomName(roomComboBox.getValue().replaceAll("P", ""))
+                        .startDate(eventStartDate.toString())
+                        .email(emailField.getText())
+                        .phoneNumber(phoneField.getText())
+                        .status(statusComboBox.getValue())
+                        .endDate(eventEndDate.toString())
+                        .startTime(String.format("%02d:%02d", startHourSpinner.getValue(), startMinuteSpinner.getValue()))
                         .endTime(String.format("%02d:%02d", endHourSpinner.getValue(), endMinuteSpinner.getValue()))
-                        .purpose(descriptionArea.getText())
+                        .purpose(purposeArea.getText())
                         .color(FormatColor.toHexString(colorPicker.getValue()))
                         .build();
 
-                timeLineByHoursService.updateEvent(selectedEvent, updatedEvent);
+                if (isValidTime(updatedEvent)) {
+                    // Cập nhật qua service
+                    timeLineByDayService.updateEvent(selectedEvent, updatedEvent);
+                }
                 refreshTimelineView();
             }
 
@@ -316,7 +369,7 @@ public class TimeDateLineController implements Initializable {
                 confirm.setContentText("Bạn có chắc muốn xóa sự kiện này?");
                 confirm.showAndWait().ifPresent(confirmResult -> {
                     if (confirmResult == ButtonType.OK) {
-                        timeLineByHoursService.deleteEvent(selectedEvent);
+                        timeLineByDayService.deleteEvent(selectedEvent);
                         refreshTimelineView();
                     }
                 });
@@ -334,131 +387,129 @@ public class TimeDateLineController implements Initializable {
 
         // Form nhập thông tin
         TextField nameField = new TextField();
+        TextField emailField = new TextField();
+        TextField phoneField = new TextField();
+
         DatePicker startDatePicker = new DatePicker(today);
-        TextArea descriptionArea = new TextArea();
+        DatePicker endDatePicker = new DatePicker(today);
+        TextArea purposeArea = new TextArea();
         ColorPicker colorPicker = new ColorPicker(Color.LIGHTBLUE);
+
+        ComboBox<String> roomComboBox = new ComboBox<>(FXCollections.observableArrayList(
+                roomList.stream().map(Room::getRoomName).collect(Collectors.toList())));
+        roomComboBox.getSelectionModel().selectFirst();
+
+        ComboBox<String> statusComboBox = new ComboBox<>(FXCollections.observableArrayList(
+                "pending", "approved", "rejected"));
+        statusComboBox.getSelectionModel().select("pending");
+
         Spinner<Integer> startHourSpinner = new Spinner<>(0, 23, 0);
-        startHourSpinner.setPrefWidth(70);
-        startHourSpinner.setEditable(true);
         Spinner<Integer> startMinuteSpinner = new Spinner<>(0, 59, 0);
-        startMinuteSpinner.setPrefWidth(70);
-        startMinuteSpinner.setEditable(true);
         Spinner<Integer> endHourSpinner = new Spinner<>(0, 23, 0);
-        endHourSpinner.setPrefWidth(70);
-        endHourSpinner.setEditable(true);
         Spinner<Integer> endMinuteSpinner = new Spinner<>(0, 59, 0);
-        endMinuteSpinner.setPrefWidth(70);
-        endMinuteSpinner.setEditable(true);
+        Arrays.asList(startHourSpinner, startMinuteSpinner, endHourSpinner, endMinuteSpinner).forEach(spinner -> {
+            spinner.setPrefWidth(70);
+            spinner.setEditable(true);
+        });
+
+        // Layout
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
         grid.addRow(0, new Label("Tên sự kiện:"), nameField);
-        grid.addRow(1, new Label("Ngày bắt đầu:"), startDatePicker);
-        grid.addRow(2, new Label("Mô tả:"), descriptionArea);
-        grid.addRow(3, new Label("Màu sắc:"), colorPicker);
-        grid.addRow(4, new Label("Giờ bắt đầu:"), new HBox(5, startHourSpinner, new Label(":"), startMinuteSpinner));
-        grid.addRow(5, new Label("Giờ kết thúc:"), new HBox(5, endHourSpinner, new Label(":"), endMinuteSpinner));
+        grid.addRow(1, new Label("Email:"), emailField);
+        grid.addRow(2, new Label("Số điện thoại:"), phoneField);
+        grid.addRow(3, new Label("Phòng:"), roomComboBox);
+        grid.addRow(4, new Label("Ngày bắt đầu:"), startDatePicker);
+        grid.addRow(4, new Label("Ngày kết thúc:"), endDatePicker);
+        grid.addRow(5, new Label("Mô tả:"), purposeArea);
+        grid.addRow(6, new Label("Màu sắc:"), colorPicker);
+        grid.addRow(7, new Label("Giờ bắt đầu:"), new HBox(5, startHourSpinner, new Label(":"), startMinuteSpinner));
+        grid.addRow(8, new Label("Giờ kết thúc:"), new HBox(5, endHourSpinner, new Label(":"), endMinuteSpinner));
+        grid.addRow(9, new Label("Trạng thái:"), statusComboBox);
+
         dialog.getDialogPane().setContent(grid);
 
         Node saveBtnNode = dialog.getDialogPane().lookupButton(saveButton);
 
         Runnable updateSaveButtonState = () -> {
-            boolean sHValid = validateAndStyleSpinner(startHourSpinner, 0, 23);
-            boolean sMValid = validateAndStyleSpinner(startMinuteSpinner, 0, 59);
-            boolean eHValid = validateAndStyleSpinner(endHourSpinner, 0, 23);
-            boolean eMValid = validateAndStyleSpinner(endMinuteSpinner, 0, 59);
+            boolean sHValid = validateAndStyleSpinner(startHourSpinner, 23);
+            boolean sMValid = validateAndStyleSpinner(startMinuteSpinner, 59);
+            boolean eHValid = validateAndStyleSpinner(endHourSpinner, 23);
+            boolean eMValid = validateAndStyleSpinner(endMinuteSpinner, 59);
+            boolean allSpinnersAreValid = sHValid && sMValid && eHValid && eMValid;
 
-            boolean allSpinnersAreIndividuallyValid = sHValid && sMValid && eHValid && eMValid;
-
-            boolean isTimeOrderValid = true; // Assume valid until proven otherwise
-            if (allSpinnersAreIndividuallyValid) { // Only check time order if individual values are valid
+            boolean isTimeOrderValid = true;
+            if (allSpinnersAreValid) {
                 LocalTime startTime = LocalTime.of(startHourSpinner.getValue(), startMinuteSpinner.getValue());
                 LocalTime endTime = LocalTime.of(endHourSpinner.getValue(), endMinuteSpinner.getValue());
-
                 if (endTime.isBefore(startTime)) {
                     isTimeOrderValid = false;
-                    // Highlight the end time spinners in red
                     endHourSpinner.getEditor().setStyle("-fx-text-fill: red;");
                     endMinuteSpinner.getEditor().setStyle("-fx-text-fill: red;");
                 } else {
-                    // Reset style if it was previously red due to time order
                     endHourSpinner.getEditor().setStyle("-fx-text-fill: -fx-text-inner-color;");
                     endMinuteSpinner.getEditor().setStyle("-fx-text-fill: -fx-text-inner-color;");
                 }
             }
 
-            boolean overallValid = allSpinnersAreIndividuallyValid && isTimeOrderValid;
-            saveBtnNode.setDisable(!overallValid);
+            saveBtnNode.setDisable(!(allSpinnersAreValid && isTimeOrderValid));
         };
 
-        // Add listeners to spinners for validation
-        startHourSpinner.getEditor().textProperty().addListener((obs, oldText, newText) -> updateSaveButtonState.run());
-        startMinuteSpinner.getEditor().textProperty()
-                .addListener((obs, oldText, newText) -> updateSaveButtonState.run());
-        endHourSpinner.getEditor().textProperty().addListener((obs, oldText, newText) -> updateSaveButtonState.run());
-        endMinuteSpinner.getEditor().textProperty().addListener((obs, oldText, newText) -> updateSaveButtonState.run());
+        // Add listeners
+        Arrays.asList(startHourSpinner.getEditor().textProperty(),
+                        startMinuteSpinner.getEditor().textProperty(),
+                        endHourSpinner.getEditor().textProperty(),
+                        endMinuteSpinner.getEditor().textProperty())
+                .forEach(prop -> prop.addListener((obs, oldVal, newVal) -> updateSaveButtonState.run()));
 
-        // Initial validation check to set button state
         updateSaveButtonState.run();
 
-        // Xử lý nút OK
         dialog.showAndWait().ifPresent(response -> {
+            // Đồng bộ giá trị nhập tay vào valueFactory trước khi lấy value
+            try {
+                startHourSpinner.getValueFactory().setValue(Integer.parseInt(startHourSpinner.getEditor().getText()));
+                startMinuteSpinner.getValueFactory().setValue(Integer.parseInt(startMinuteSpinner.getEditor().getText()));
+                endHourSpinner.getValueFactory().setValue(Integer.parseInt(endHourSpinner.getEditor().getText()));
+                endMinuteSpinner.getValueFactory().setValue(Integer.parseInt(endMinuteSpinner.getEditor().getText()));
+            } catch (NumberFormatException ignored) {}
             if (response == saveButton) {
-                // Validate đầu vào
-                if (nameField.getText().trim().isEmpty()
-                        || startDatePicker.getValue() == null) {
-                    Alert alert = new Alert(Alert.AlertType.WARNING);
-                    alert.setTitle("Thiếu thông tin");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Vui lòng nhập đầy đủ các trường bắt buộc.");
-                    alert.showAndWait();
+                if (nameField.getText().trim().isEmpty() || startDatePicker.getValue() == null) {
+                    new Alert(Alert.AlertType.WARNING, "Vui lòng nhập đầy đủ các trường bắt buộc.").showAndWait();
                     return;
                 }
 
-                // Final check for spinner validity before saving (redundant but safe)
-                if (saveBtnNode.isDisable()) { // If the button is disabled, it means spinners are invalid
-                    Alert alert = new Alert(Alert.AlertType.WARNING);
-                    alert.setTitle("Lỗi nhập liệu");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Vui lòng kiểm tra lại giờ và phút nhập liệu.");
-                    alert.showAndWait();
+                if (saveBtnNode.isDisable()) {
+                    new Alert(Alert.AlertType.WARNING, "Vui lòng kiểm tra lại giờ và phút nhập liệu.").showAndWait();
                     return;
                 }
 
-                // Calculate end date based on start and end time
-                LocalDate endDate = startDatePicker.getValue();
-                LocalTime startTime = LocalTime.of(startHourSpinner.getValue(), startMinuteSpinner.getValue());
-                LocalTime endTime = LocalTime.of(endHourSpinner.getValue(), endMinuteSpinner.getValue());
-
-                if (endTime.isBefore(startTime)) {
-                    endDate = endDate.plusDays(1);
-                }
-
-                // Tạo sự kiện mới
                 BookRoom newEvent = BookRoom.builder()
                         .fullName(nameField.getText())
-                        .startDate(endDate.toString())
-                        .startTime(
-                                String.format("%02d:%02d", startHourSpinner.getValue(), startMinuteSpinner.getValue()))
+                        .email(emailField.getText())
+                        .phoneNumber(phoneField.getText())
+                        .roomName(roomComboBox.getValue())
+                        .startDate(startDatePicker.getValue().toString())
+                        .endDate(endDatePicker.getValue().toString())
+                        .startTime(String.format("%02d:%02d", startHourSpinner.getValue(), startMinuteSpinner.getValue()))
                         .endTime(String.format("%02d:%02d", endHourSpinner.getValue(), endMinuteSpinner.getValue()))
-                        .purpose(descriptionArea.getText())
+                        .purpose(purposeArea.getText())
                         .color(FormatColor.toHexString(colorPicker.getValue()))
+                        .status(statusComboBox.getValue())
                         .build();
 
-                timeLineByHoursService.addEvent(newEvent);
+                if (isValidTime(newEvent)) {
+                    timeLineByDayService.addEvent(newEvent);
+                }
                 refreshTimelineView();
 
-                Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
-                successAlert.setTitle("Thành công");
-                successAlert.setHeaderText(null);
-                successAlert.setContentText("Sự kiện mới đã được thêm vào!");
-                successAlert.showAndWait();
+                new Alert(Alert.AlertType.INFORMATION, "Sự kiện mới đã được thêm vào!").showAndWait();
             }
         });
     }
 
     /**
-     * Thiết lập cấu trúc cho cả hai TableView.
+     *
      */
     private void setupTables() {
         setupNameTable();
@@ -466,51 +517,36 @@ public class TimeDateLineController implements Initializable {
     }
 
     private void setupNameTable() {
-//        TableColumn<BookRoom, String> parentColumn = new TableColumn<>("Events");
-//        parentColumn.getColumns().addAll(sttColumn, nameEvent);
-
         eventNameTable.getColumns().clear();
-        eventNameTable.getColumns().addAll(sttColumn, nameEvent);
-//        eventNameTable.getColumns().add(parentColumn);
-        eventNameTable.setItems(eventsList);
-
-        // Set cell value factory for event name column
-        nameEvent.setCellValueFactory(
-                cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFullName()));
-
-        sttColumn.setCellFactory(col -> new TableCell<BookRoom, Number>() {
+        nameEvent.setText("Phòng");
+        nameEvent.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getRoomName()));
+        eventNameTable.getColumns().addAll(Arrays.asList(sttColumn, nameEvent));
+        // Hiển thị danh sách phòng
+        eventNameTable.setItems(FXCollections.observableArrayList(roomList));
+        sttColumn.setCellFactory(col -> new TableCell<Room, Number>() {
             @Override
             protected void updateItem(Number item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty ? null : String.valueOf(getIndex() + 1));
             }
         });
-
         sttColumn.setStyle("-fx-alignment: CENTER; -fx-background-color: #e9e9e9; -fx-border-color: #c8c8c8;");
     }
 
-    /**
-     * Tạo và thiết lập các cột ngày và giờ cho bảng dòng thời gian.
-     */
     private void setupTimelineColumns() {
         timelineTable.getColumns().clear();
+        timelineTable.getStyleClass().add("right-border-bold");
 
         int daysInMonth = timelineStartDate.lengthOfMonth();
+
+        LocalDate firstDayOfMonth = timelineStartDate.withDayOfMonth(1);
         for (int dayOffset = 0; dayOffset < daysInMonth; dayOffset++) {
-            LocalDate day = timelineStartDate.plusDays(dayOffset);
+
+            LocalDate day = firstDayOfMonth.plusDays(dayOffset);
             String dayLabel = day.format(DateTimeFormatter.ofPattern("dd.MM"));
 
             TableColumn<BookRoom, Void> dayColumn = new TableColumn<>(dayLabel);
             dayColumn.setPrefWidth(CELL_WIDTH);
-
-            // Add time markers
-//             for (int hour = 0; hour < 24; hour++) {
-//             TableColumn<BookRoom, Void> hourColumn = new
-//             TableColumn<>(String.format("%02d:00", hour));
-//             hourColumn.setPrefWidth(CELL_WIDTH / 24.0);
-//             hourColumn.setSortable(false);
-//             dayColumn.getColumns().add(hourColumn);
-//             }
 
             // Add to timeline table
             timelineTable.getColumns().add(dayColumn);
@@ -540,68 +576,53 @@ public class TimeDateLineController implements Initializable {
         syncVerticalScrollBar(timelineTable, scrollPane);
     }
 
-    /**
-     * Vẽ lại tất cả các sự kiện lên overlayPane.
-     */
+    // --- Event Drawing ---
     private void drawEvents() {
         overlayPane.getChildren().clear();
-
-        for (int i = 0; i < eventsList.size(); i++) {
-            BookRoom event = eventsList.get(i);
-            LocalDate eventDate;
+        LocalDate firstDayOfMonth = timelineStartDate.withDayOfMonth(1);
+        Map<String, Integer> roomIndexMap = new HashMap<>();
+        for (int i = 0; i < roomList.size(); i++) {
+            roomIndexMap.put(roomList.get(i).getRoomName(), i);
+        }
+        for (BookRoom event : eventsList) {
             try {
-                eventDate = LocalDate.parse(event.getStartDate());
+                Integer roomIndex = roomIndexMap.get(event.getRoomName());
+                if (roomIndex == null) continue;
+                LocalDateTime startDateTime = LocalDateTime.of(LocalDate.parse(event.getStartDate()), LocalTime.parse(event.getStartTime()));
+                LocalDateTime endDateTime = LocalDateTime.of(LocalDate.parse(event.getEndDate()), LocalTime.parse(event.getEndTime()));
+                long dayOffset = ChronoUnit.DAYS.between(firstDayOfMonth, startDateTime.toLocalDate());
+                long endDayOffset = ChronoUnit.DAYS.between(firstDayOfMonth, endDateTime.toLocalDate());
+                if (dayOffset < 0) continue;
+                double startMinutes = startDateTime.getHour() * 60 + startDateTime.getMinute();
+                double endMinutes = (endDayOffset - dayOffset) * HOURS_PER_DAY * 60 + endDateTime.getHour() * 60 + endDateTime.getMinute();
+                double x = dayOffset * CELL_WIDTH + (startMinutes / (HOURS_PER_DAY * 60)) * CELL_WIDTH;
+                double width = (endMinutes - startMinutes) / (HOURS_PER_DAY * 60) * CELL_WIDTH;
+                double y = roomIndex * (ROW_HEIGHT - 1);
+                Pane eventPane = createEventPane(event, x, y, width);
+                overlayPane.getChildren().add(eventPane);
             } catch (Exception e) {
-                System.err.println("Invalid date format for event: " + event.getFullName());
-                continue; // Bỏ qua sự kiện có ngày không hợp lệ
+                System.err.println("Invalid date/time format for event: " + event.getFullName());
             }
-
-            long dayOffset = ChronoUnit.DAYS.between(timelineStartDate, eventDate);
-            if (dayOffset < 0 || dayOffset >= DAYS_VISIBLE)
-                continue;
-
-            LocalTime startTime = LocalTime.parse(event.getStartTime());
-            LocalTime endTime = LocalTime.parse(event.getEndTime());
-
-            double startMinutes = startTime.getHour() * 60 + startTime.getMinute();
-            double endMinutes = endTime.getHour() * 60 + endTime.getMinute();
-
-            double x = (dayOffset * HOURS_PER_DAY * 60 + startMinutes) / MINUTES_PER_PIXEL;
-            double width = (endMinutes - startMinutes) / MINUTES_PER_PIXEL;
-            double y = i * ROW_HEIGHT;
-
-            Pane eventPane = createEventPane(event, x, y, width);
-            overlayPane.getChildren().add(eventPane);
         }
     }
 
-    /**
-     * Tạo một Pane đại diện cho một sự kiện.
-     */
     private Pane createEventPane(BookRoom event, double x, double y, double width) {
         Pane eventPane = new Pane();
         eventPane.setLayoutX(x);
         eventPane.setLayoutY(y);
         eventPane.setPrefWidth(width);
-        eventPane.setPrefHeight(ROW_HEIGHT - 1); // Trừ 1 để có khoảng hở
+        eventPane.setPrefHeight(ROW_HEIGHT);
         eventPane.setStyle("-fx-background-color: " + event.getColor() + "; -fx-background-radius: 6;");
-
-        Tooltip.install(eventPane,
-                new Tooltip(event.getFullName() + "\n" + event.getStartTime() + " - " + event.getEndTime()));
-
+        Tooltip.install(eventPane, new Tooltip(event.getFullName() + "\n" + event.getStartTime() + " - " + event.getEndTime()));
         setupEventPaneInteractions(eventPane, event);
         return eventPane;
     }
 
-    /**
-     * Thiết lập các tương tác (hover, kéo, thả, chỉnh độ rộng) cho một event pane.
-     */
+    // --- Event Pane Interactions ---
     private void setupEventPaneInteractions(Pane eventPane, BookRoom event) {
         // Hiệu ứng Hover
-        eventPane.setOnMouseEntered(e -> eventPane.setStyle("-fx-background-color: " + HOVER_EVENT_COLOR
-                + "; -fx-background-radius: 6; -fx-border-color: white; -fx-border-width: 1.5;"));
-        eventPane.setOnMouseExited(
-                e -> eventPane.setStyle("-fx-background-color: " + event.getColor() + "; -fx-background-radius: 6;"));
+        eventPane.setOnMouseEntered(e -> eventPane.setStyle("-fx-background-color: " + HOVER_EVENT_COLOR + "; -fx-background-radius: 6; -fx-border-color: white; -fx-border-width: 1.5;"));
+        eventPane.setOnMouseExited(e -> eventPane.setStyle("-fx-background-color: " + event.getColor() + "; -fx-background-radius: 6;"));
 
         final double[] dragOffset = new double[2];
         final double[] initialWidth = new double[1];
@@ -634,8 +655,7 @@ public class TimeDateLineController implements Initializable {
                 }
                 e.consume();
             } else if (e.getButton() == MouseButton.SECONDARY) {
-                LocalDate eventDate = LocalDate.parse(event.getStartDate());
-                viewEventDetail(eventDate);
+                viewEventDetail(LocalDate.parse(event.getStartDate()));
             }
         });
 
@@ -688,44 +708,55 @@ public class TimeDateLineController implements Initializable {
         });
     }
 
-    /**
-     * Cập nhật thông tin (thời gian, ngày, vị trí) của đối tượng Events từ vị trí
-     * của Pane.
-     */
+    // --- Event Update from Pane ---
     private void updateEventFromPane(Pane eventPane, BookRoom event) {
         double startX = eventPane.getLayoutX();
         double width = eventPane.getWidth();
+        double endX = startX + width;
 
-        // Cập nhật thời gian
-        int startTotalMinutes = (int) Math.round((startX * MINUTES_PER_PIXEL));
-        int endTotalMinutes = (int) Math.round(((startX + width) * MINUTES_PER_PIXEL));
+        // Xác định roomName mới dựa trên vị trí Y của eventPane
+        int newRowIndex = (int) Math.round(eventPane.getLayoutY() / ROW_HEIGHT);
+        String newRoomName = (newRowIndex >= 0 && newRowIndex < roomList.size()) ? roomList.get(newRowIndex).getRoomName() : event.getRoomName();
 
-        int dayOffset = startTotalMinutes / (HOURS_PER_DAY * 60);
-        int minutesInDay = startTotalMinutes % (HOURS_PER_DAY * 60);
+        // Tính offset ngày dựa theo firstDayOfMonth giống drawEvents
+        LocalDate firstDayOfMonth = timelineStartDate.withDayOfMonth(1);
+        int startDayOffset = (int) (startX / CELL_WIDTH);
+        int endDayOffset = (int) (endX / CELL_WIDTH);
+        LocalDate newStartDate = firstDayOfMonth.plusDays(startDayOffset);
+        LocalDate newEndDate = firstDayOfMonth.plusDays(endDayOffset);
 
-        LocalTime newStart = LocalTime.of(minutesInDay / 60, minutesInDay % 60);
-        LocalTime newEnd = newStart.plusMinutes(endTotalMinutes - startTotalMinutes);
+        // Tính thời gian trong ngày (theo phút)
+        double xInDay = startX % CELL_WIDTH;
+        double startMinutesInDay = (xInDay / CELL_WIDTH) * (HOURS_PER_DAY * 60);
+        double durationMinutes = (width / CELL_WIDTH) * (HOURS_PER_DAY * 60);
+        double endMinutesInDay = startMinutesInDay + durationMinutes;
 
-        LocalDate newDate = timelineStartDate.plusDays(dayOffset);
+        // Chuyển sang LocalTime
+        LocalTime newStart = LocalTime.of((int) (startMinutesInDay / 60), (int) (startMinutesInDay % 60));
+        LocalTime newEnd = LocalTime.of((int) (endMinutesInDay / 60), (int) (endMinutesInDay % 60));
 
+        // Tạo BookRoom mới với roomName mới
         BookRoom updatedEvent = BookRoom.builder()
                 .fullName(event.getFullName())
-                .startDate(newDate.toString())
-                .startTime(newStart.format(DateTimeFormatter.ofPattern("HH:mm")))
-                .endTime(newEnd.format(DateTimeFormatter.ofPattern("HH:mm")))
+                .email(event.getEmail())
+                .status(event.getStatus())
+                .phoneNumber(event.getPhoneNumber())
+                .roomName(newRoomName)
                 .color(event.getColor())
                 .purpose(event.getPurpose())
+                .startDate(newStartDate.toString())
+                .endDate(newEndDate.toString())
+                .startTime(newStart.format(DateTimeFormatter.ofPattern("HH:mm")))
+                .endTime(newEnd.format(DateTimeFormatter.ofPattern("HH:mm")))
                 .build();
 
-        // Cập nhật dữ liệu qua TimeLineByHoursService
-        timeLineByHoursService.updateEvent(event, updatedEvent);
-
+        if (isValidTime(updatedEvent)) {
+            timeLineByDayService.updateEvent(event, updatedEvent);
+        }
         refreshTimelineView();
     }
 
-    /**
-     * Làm mới toàn bộ giao diện: tạo lại cột, vẽ lại sự kiện.
-     */
+    // --- Timeline Refresh ---
     private void refreshTimelineView() {
         loadEvents();
         setupTimelineColumns();
@@ -734,17 +765,14 @@ public class TimeDateLineController implements Initializable {
         timelineTable.refresh();
     }
 
-    /**
-     * Chuyển ngày tới hoặc lùi.
-     */
+    // --- Date Navigation ---
     private void navigateDate(int days) {
-        // Thay đổi giá trị của DatePicker sẽ kích hoạt listener,
-        // listener này sẽ gọi refreshTimelineView()
         dateBox.setValue(dateBox.getValue().plusDays(days));
     }
 
-    // <editor-fold desc="Scrolling and Synchronization Logic">
-
+    // ======================
+    // UI ScrollBar Utilities
+    // ======================
     private void hideDefaultScrollBars() {
         ScrollBar verticalScrollBar = findScrollBar(timelineTable, Orientation.VERTICAL);
         if (verticalScrollBar != null) {
@@ -819,7 +847,7 @@ public class TimeDateLineController implements Initializable {
         Node header = tableView.lookup(".column-header-background");
         if (header != null) {
             Platform.runLater(() -> {
-                double headerHeight = header.getLayoutBounds().getHeight() + 10; // Thêm 5px để tránh bị cắt
+                double headerHeight = header.getLayoutBounds().getHeight();
                 for (Node node : nodesToAlign) {
                     StackPane.setMargin(node, new Insets(headerHeight, 0, 0, 0));
                 }
@@ -851,21 +879,56 @@ public class TimeDateLineController implements Initializable {
         return Math.round(value) * (double) 1;
     }
 
+    // ======================
+    // Validation Utilities
+    // ======================
     // Helper method for spinner validation and styling
-    private boolean validateAndStyleSpinner(Spinner<Integer> spinner, int min, int max) {
+    private boolean validateAndStyleSpinner(Spinner<Integer> spinner, int max) {
         String text = spinner.getEditor().getText();
         try {
             int value = Integer.parseInt(text);
-            if (value >= min && value <= max) {
-                spinner.getEditor().setStyle("-fx-text-fill: -fx-text-inner-color;"); // Reset to default text color
+            if (value >= 0 && value <= max) {
+                spinner.getEditor().setStyle("-fx-text-fill: -fx-text-inner-color;");
                 return true;
             } else {
-                spinner.getEditor().setStyle("-fx-text-fill: red;"); // Set red color
+                spinner.getEditor().setStyle("-fx-text-fill: red;");
                 return false;
             }
         } catch (NumberFormatException e) {
-            spinner.getEditor().setStyle("-fx-text-fill: red;"); // Invalid number format
+            spinner.getEditor().setStyle("-fx-text-fill: red;");
             return false;
         }
+    }
+
+    // ======================
+    // Event Validation
+    // ======================
+    private boolean isValidTime(BookRoom event) {
+        LocalDateTime newStartDateTime = LocalDateTime.of(LocalDate.parse(event.getStartDate()), LocalTime.parse(event.getStartTime()));
+        LocalDateTime newEndDateTime = LocalDateTime.of(LocalDate.parse(event.getEndDate()), LocalTime.parse(event.getEndTime()));
+
+        List<BookRoom> overlappingEvents = timeLineByDayService.getAllEventsByRoomName(event.getRoomName());
+        for (BookRoom existingEvent : overlappingEvents) {
+            if (Objects.equals(existingEvent.getEmail(), event.getEmail())) continue;
+
+            LocalDateTime existingStartDateTime = LocalDateTime.of(
+                    LocalDate.parse(existingEvent.getStartDate()),
+                    LocalTime.parse(existingEvent.getStartTime())
+            );
+            LocalDateTime existingEndDateTime = LocalDateTime.of(
+                    LocalDate.parse(existingEvent.getEndDate()),
+                    LocalTime.parse(existingEvent.getEndTime())
+            );
+
+            if (newStartDateTime.isBefore(existingEndDateTime) && existingStartDateTime.isBefore(newEndDateTime)) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Lỗi trùng lặp sự kiện");
+                alert.setHeaderText(null);
+                alert.setContentText("Sự kiện này đã tồn tại trong khoảng thời gian đã chọn.");
+                alert.showAndWait();
+                return false;
+            }
+        }
+        return true;
     }
 }

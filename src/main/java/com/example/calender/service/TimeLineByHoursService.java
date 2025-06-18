@@ -1,7 +1,7 @@
 package com.example.calender.service;
 
 import com.example.calender.config.JsonFileManager;
-import com.example.calender.entity.Events;
+import com.example.calender.models.Events;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
