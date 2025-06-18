@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane maxHeight="600.0" maxWidth="943.0" prefHeight="600.0" prefWidth="943.0"
+            stylesheets="@/styles/styles.css, @/styles/timeline.css" xmlns="http://javafx.com/javafx/11.0.14-internal"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.calender.controller.TimeDateLineController">
+    <top>
+        <BorderPane maxHeight="49.0" prefHeight="49.0" prefWidth="943.0">
+            <center>
+                <HBox alignment="CENTER_RIGHT" spacing="10.0" styleClass="date-controls">
+                    <Button fx:id="prevBtn" styleClass="navigation-button" text="&lt;"/>
+                    <DatePicker fx:id="dateBox"/>
+                    <Button fx:id="nextBtn" styleClass="navigation-button" text="&gt;"/>
+                </HBox>
+            </center>
+        </BorderPane>
+    </top>
+
+    <center>
+        <SplitPane dividerPositions="0.2" prefHeight="600.0" prefWidth="943.0" BorderPane.alignment="CENTER">
+            <AnchorPane maxWidth="350">
+                <TableView fx:id="eventNameTable" prefHeight="600.0" prefWidth="250.0"
+                           style="-fx-focus-traversable: false;" styleClass="hint-scroll" AnchorPane.bottomAnchor="0.0"
+                           AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <columns>
+                        <!-- Cột STT -->
+                        <TableColumn fx:id="sttColumn" editable="false" prefWidth="50.0" text="STT"/>
+                        <!-- Cột tên sự kiện -->
+                        <TableColumn fx:id="nameEvent" editable="false" prefWidth="300.0" text="Name"/>
+                    </columns>
+                </TableView>
+            </AnchorPane>
+            <AnchorPane>
+                <StackPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+                           AnchorPane.topAnchor="0.0">
+                    <StackPane>
+                        <TableView fx:id="timelineTable" prefHeight="600.0" style="-fx-focus-traversable: false;"/>
+                        <ScrollPane fx:id="scrollPane" hbarPolicy="ALWAYS" vbarPolicy="ALWAYS" style="-fx-background-color: gray">
+                            <AnchorPane>
+                                <Pane fx:id="overlayPane"/>
+                            </AnchorPane>
+                        </ScrollPane>
+                    </StackPane>
+                </StackPane>
+            </AnchorPane>
+        </SplitPane>
+    </center>
+
+    <bottom>
+        <AnchorPane>
+            <HBox spacing="10.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="20.0"
+                  AnchorPane.topAnchor="10.0">
+                <Button fx:id="addBtn" styleClass="footer-button" text="Add"/>
+                <Button fx:id="updateBtn" styleClass="footer-button" text="Update"/>
+                <Button fx:id="deleteBtn" styleClass="footer-button" text="Delete"/>
+            </HBox>
+        </AnchorPane>
+    </bottom>
+    <left>
+    </left>
+    <right>
+        <BorderPane prefHeight="200.0" prefWidth="200.0" style="-fx-pref-width: 5;" BorderPane.alignment="CENTER"/>
+    </right>
+
+</BorderPane>

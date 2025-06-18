@@ -1,0 +1,41 @@
+.tooltip {
+    -fx-background-color: rgba(30, 30, 30, 0.55);
+    -fx-background-radius: 18px;
+    -fx-border-radius: 18px;
+    -fx-border-color: rgba(255, 255, 255, 0.18);
+    -fx-border-width: 1.5;
+    -fx-padding: 18px 22px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 18, 0.2, 0, 4);
+    -fx-text-fill: #fff;
+    -fx-font-size: 15px;
+    -fx-font-family: 'Segoe UI', 'Arial', sans-serif;
+    -fx-font-weight: 500;
+    -fx-background-insets: 0;
+    -fx-opacity: 0.97;
+    -fx-text-alignment: left;
+    -fx-alignment: top-left;
+    -fx-min-width: 220px;
+    -fx-max-width: 320px;
+    -fx-wrap-text: true;
+}
+
+.tooltip .text {
+    -fx-fill: #fff;
+    -fx-font-size: 15px;
+    -fx-font-family: 'Segoe UI', 'Arial', sans-serif;
+    -fx-font-weight: 500;
+    -fx-text-alignment: left;
+    -fx-alignment: top-left;
+}
+
+.cell-label {
+    -fx-text-fill: #fff;
+    -fx-font-size: 5px;
+    -fx-padding: 6px 8px;
+    -fx-border-color: rgba(252, 252, 252, 0.829);
+    -fx-border-width: 0 0 1 1;
+}
+
+.cell-label:first-child {
+    -fx-font-weight: bold;
+}

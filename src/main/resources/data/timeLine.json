@@ -1,0 +1,42 @@
+[
+  {
+    "name": "sân 1",
+    "date": "2025-06-18",
+    "startHour": "13:43",
+    "endHour": "18:02",
+    "color": "#4D001A",
+    "description": "game bóng v1 với v2"
+  },
+  {
+    "name": "sân 3",
+    "date": "2025-06-20",
+    "startHour": "01:30",
+    "endHour": "23:09",
+    "color": "#ADD8E6",
+    "description": "dfdfad"
+  },
+  {
+    "name": "sân4",
+    "date": "2025-06-17",
+    "startHour": "02:00",
+    "endHour": "03:00",
+    "color": "#ADD8E6",
+    "description": ""
+  },
+  {
+    "name": "sân 6",
+    "date": "2025-06-17",
+    "startHour": "07:00",
+    "endHour": "11:00",
+    "color": "#CCCC33",
+    "description": ""
+  },
+  {
+    "name": "106",
+    "date": "2025-06-26",
+    "startHour": "10:00",
+    "endHour": "14:30",
+    "color": "#ADD8E6",
+    "description": ""
+  }
+]

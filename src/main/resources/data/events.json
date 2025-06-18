@@ -1,0 +1,30 @@
+[
+  {
+    "name": "",
+    "startDate": "2025-01-01",
+    "endDate": "2025-01-08",
+    "description": "",
+    "color": "b3b31a"
+  },
+  {
+    "name": "test1",
+    "startDate": "2025-01-20",
+    "endDate": "2025-01-20",
+    "description": "",
+    "color": "#B34D1A"
+  },
+  {
+    "name": "test 2",
+    "startDate": "2025-02-04",
+    "endDate": "2025-02-27",
+    "description": "TEST 2",
+    "color": "#CC6633"
+  },
+  {
+    "name": "",
+    "startDate": "2025-03-17",
+    "endDate": "2025-03-24",
+    "description": "",
+    "color": "#B31A1A"
+  }
+]
