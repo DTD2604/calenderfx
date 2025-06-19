@@ -6,32 +6,31 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
-<?import com.jfoenix.controls.JFXDatePicker?>
 <?import javafx.scene.control.DatePicker?>
 <BorderPane prefHeight="714.0" prefWidth="926.0" stylesheets="@/styles/styles.css, @/styles/calendar.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.calender.controller.CalendarController">
     <top>
         <AnchorPane prefHeight="46.0" prefWidth="926.0" style="-fx-background-color: white;" BorderPane.alignment="CENTER">
             <HBox alignment="CENTER_RIGHT" spacing="20" AnchorPane.rightAnchor="20" AnchorPane.topAnchor="10" AnchorPane.bottomAnchor="10">
-                <Button fx:id="prevYearBtn" styleClass="navigation-button" text="←" />
+                <Button fx:id="btn_prevYear" styleClass="navigation-button" text="←" />
                 <Label styleClass="year-label" text="2024" />
 <!--                <JFXDatePicker fx:id="yearPicker" />-->
-                <DatePicker fx:id="yearPicker" promptText="Select Year" editable="false" />
-                <Button fx:id="nextYearBtn" styleClass="navigation-button" text="→" />
-                <Button fx:id="viewReportBtn" styleClass="navigation-button" text="View Report" />
+                <DatePicker fx:id="dp_year" promptText="Select Year" editable="false" />
+                <Button fx:id="btn_nextYear" styleClass="navigation-button" text="→" />
+                <Button fx:id="btn_viewReport" styleClass="navigation-button" text="View Report" />
             </HBox>
         </AnchorPane>
     </top>
     <center>
         <AnchorPane style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #e0e0e0; -fx-border-width: 1;" BorderPane.alignment="CENTER">
-            <GridPane fx:id="yearGrid" hgap="10" style="-fx-background-radius: 10;" styleClass="calendar-grid" vgap="10" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.topAnchor="10" />
+            <GridPane fx:id="gp_Year" hgap="10" style="-fx-background-radius: 10;" styleClass="calendar-grid" vgap="10" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.topAnchor="10" />
         </AnchorPane>
     </center>
     <bottom>
         <AnchorPane prefWidth="657.0" style="-fx-background-color: white;" BorderPane.alignment="CENTER">
-            <HBox fx:id="footerBox" spacing="10" AnchorPane.bottomAnchor="20" AnchorPane.leftAnchor="20" AnchorPane.topAnchor="10">
-                <Button fx:id="addBtn" styleClass="footer-button" text="Add" />
-                <Button fx:id="updateBtn" styleClass="footer-button" text="Update" />
-                <Button fx:id="deleteBtn" styleClass="footer-button" text="Delete" />
+            <HBox spacing="10" AnchorPane.bottomAnchor="20" AnchorPane.leftAnchor="20" AnchorPane.topAnchor="10">
+                <Button fx:id="btn_add" styleClass="footer-button" text="Add" />
+                <Button fx:id="btn_update" styleClass="footer-button" text="Update" />
+                <Button fx:id="btn_delete" styleClass="footer-button" text="Delete" />
             </HBox>
         </AnchorPane>
     </bottom>

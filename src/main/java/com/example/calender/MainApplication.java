@@ -11,7 +11,7 @@ public class MainApplication extends Application {
     @Override
     public void start(Stage stage) throws Exception {
 //         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/calender/time_line.fxml"));
-         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/calender/time_line_day.fxml"));
+         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/calender/timeLine/time_line_day.fxml"));
 //        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/calender/calendar_view.fxml"));
         Parent root = loader.load();
         Scene scene = new Scene(root);

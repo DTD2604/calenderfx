@@ -26,22 +26,21 @@ public class CalendarController implements Initializable {
     private final CalendarService calendarService = CalendarService.getInstance();
 
     @FXML
-    private Button prevYearBtn;
+    private Button btn_prevYear;
     @FXML
-    private Button nextYearBtn;
+    private Button btn_nextYear;
     @FXML
-//    private JFXDatePicker yearPicker;
-    private DatePicker yearPicker;
+    private DatePicker dp_year;
     @FXML
-    private GridPane yearGrid;
+    private GridPane gp_Year;
     @FXML
-    private Button addBtn;
+    private Button btn_add;
     @FXML
-    private Button updateBtn;
+    private Button btn_update;
     @FXML
-    private Button deleteBtn;
+    private Button btn_delete;
     @FXML
-    private Button viewReportBtn;
+    private Button btn_viewReport;
 
     private int currentYear;
 
@@ -50,30 +49,30 @@ public class CalendarController implements Initializable {
         currentYear = LocalDate.now().getYear();
         refreshYearGrid();
 
-        yearPicker.setValue(LocalDate.of(currentYear, 1, 1));
+        dp_year.setValue(LocalDate.of(currentYear, 1, 1));
 
-        yearPicker.valueProperty().addListener((obs, oldVal, newVal) -> {
+        dp_year.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 currentYear = newVal.getYear();
                 refreshYearGrid();
             }
         });
 
-        prevYearBtn.setOnAction(e -> navigateYear(-1));
-        nextYearBtn.setOnAction(e -> navigateYear(1));
+        btn_prevYear.setOnAction(e -> navigateYear(-1));
+        btn_nextYear.setOnAction(e -> navigateYear(1));
 
         // Add button handlers
-        addBtn.setOnAction(e -> {
+        btn_add.setOnAction(e -> {
             LocalDate today = LocalDate.now();
             createEvent(today);
         });
 
-        updateBtn.setOnAction(e -> {
+        btn_update.setOnAction(e -> {
             LocalDate today = LocalDate.now();
             viewEventDetail(today);
         });
 
-        deleteBtn.setOnAction(e -> {
+        btn_delete.setOnAction(e -> {
             LocalDate today = LocalDate.now();
             EventSchedule event = calendarService.getEventsByDate(today);
             if (event != null) {
@@ -94,26 +93,26 @@ public class CalendarController implements Initializable {
             }
         });
 
-        viewReportBtn.setOnAction(e -> {
+        btn_viewReport.setOnAction(e -> {
             refreshCalendarView();
         });
     }
 
     private void renderCalendar(List<EventSchedule> allEvents) {
-        yearGrid.getChildren().clear();
-        yearGrid.getColumnConstraints().clear();
-        yearGrid.getRowConstraints().clear();
+        gp_Year.getChildren().clear();
+        gp_Year.getColumnConstraints().clear();
+        gp_Year.getRowConstraints().clear();
 
         for (int i = 0; i < 4; i++) {
             ColumnConstraints colConstraints = new ColumnConstraints();
             colConstraints.setPercentWidth(100.0 / 4);
-            yearGrid.getColumnConstraints().add(colConstraints);
+            gp_Year.getColumnConstraints().add(colConstraints);
         }
 
         for (int i = 0; i < 2; i++) {
             RowConstraints rowConstraints = new RowConstraints();
             rowConstraints.setPercentHeight(100.0 / 3);
-            yearGrid.getRowConstraints().add(rowConstraints);
+            gp_Year.getRowConstraints().add(rowConstraints);
         }
 
         int col = 0, row = 0;
@@ -121,7 +120,7 @@ public class CalendarController implements Initializable {
             VBox monthBox = createMonthView(month, allEvents);
             monthBox.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
-            yearGrid.add(monthBox, col, row);
+            gp_Year.add(monthBox, col, row);
             GridPane.setMargin(monthBox, new Insets(10));
 
             GridPane.setHgrow(monthBox, Priority.ALWAYS);
@@ -437,20 +436,20 @@ public class CalendarController implements Initializable {
 
     private void refreshCalendarView() {
         List<EventSchedule> allEvents = calendarService.getAllEvents();
-        yearGrid.getChildren().clear();
+        gp_Year.getChildren().clear();
         renderCalendar(allEvents);
     }
 
     private void navigateYear(int offset) {
-        yearPicker.setValue(yearPicker.getValue().plusYears(offset));
+        dp_year.setValue(dp_year.getValue().plusYears(offset));
     }
 
     private void refreshYearGrid() {
         // Logic to refresh the year grid based on the currentYear
         List<EventSchedule> allEvents = calendarService.getAllEvents();
-        yearGrid.getChildren().clear();
+        gp_Year.getChildren().clear();
         renderCalendar(allEvents);
-        highLightStartDate(yearPicker);
+        highLightStartDate(dp_year);
     }
 
     private void highLightStartDate(DatePicker datePicker) {

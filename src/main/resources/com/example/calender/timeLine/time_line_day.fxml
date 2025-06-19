@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane fx:id="bp_mainLayout" maxHeight="600.0" maxWidth="943.0" prefHeight="600.0" prefWidth="943.0" stylesheets="@/styles/styles.css, @/styles/timeline.css" xmlns="http://javafx.com/javafx/11.0.14-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.calender.controller.TimeDateLineController">
+    <top>
+        <BorderPane maxHeight="49.0" prefHeight="49.0" prefWidth="943.0">
+            <center>
+                <HBox alignment="CENTER_RIGHT" spacing="10.0" styleClass="date-controls">
+                    <Button fx:id="btn_prev" styleClass="navigation-button" text="&lt;" />
+                    <DatePicker fx:id="dpk_date" />
+                    <Button fx:id="btn_next" styleClass="navigation-button" text="&gt;" />
+                </HBox>
+            </center>
+         <left>
+             <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER" spacing="10.0">
+                 <Button fx:id="btn_day" styleClass="navigation-button" text="Ngày"/>
+                 <Button fx:id="btn_week" styleClass="navigation-button" text="Tuần"/>
+                 <Button fx:id="btn_month" styleClass="navigation-button" text="Tháng"/>
+             </HBox>
+         </left>
+        </BorderPane>
+    </top>
+
+    <center>
+        <fx:include source="body_view.fxml"/>
+    </center>
+
+    <bottom>
+        <AnchorPane>
+            <HBox spacing="10.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="20.0" AnchorPane.topAnchor="10.0">
+                <Button fx:id="btn_add" styleClass="footer-button" text="Add" />
+                <Button fx:id="btn_update" styleClass="footer-button" text="Update" />
+                <Button fx:id="btn_delete" styleClass="footer-button" text="Delete" />
+            </HBox>
+        </AnchorPane>
+    </bottom>
+    <left>
+    </left>
+    <right>
+        <BorderPane prefHeight="200.0" prefWidth="200.0" style="-fx-pref-width: 5;" BorderPane.alignment="CENTER" />
+    </right>
+
+</BorderPane>
