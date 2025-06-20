@@ -1,8 +1,10 @@
 package com.example.calender.controller.timeLine;
 
 import com.example.calender.models.BookRoom;
+import com.vvg.pos.bean.Room;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
@@ -24,12 +26,12 @@ public class MonthViewController extends BaseTimeLineController implements Initi
     public void initialize(URL location, ResourceBundle resources) {
         loadEvents();
         setupTables();
+        loadView();
 
         Platform.runLater(() -> {
             PauseTransition pause = new PauseTransition(Duration.millis(50));
             pause.setOnFinished(e -> {
                 setupBindingsAndListeners();
-                drawEvents();
             });
             pause.play();
         });
@@ -48,7 +50,7 @@ public class MonthViewController extends BaseTimeLineController implements Initi
             LocalDate day = firstDayOfMonth.plusDays(dayOffset);
             String dayLabel = day.format(DateTimeFormatter.ofPattern("dd.MM"));
 
-            TableColumn<BookRoom, Void> dayColumn = new TableColumn<>(dayLabel);
+            TableColumn<Room, Void> dayColumn = new TableColumn<>(dayLabel);
             dayColumn.setPrefWidth(CELL_WIDTH);
 
             // Thêm style cho các cột
@@ -73,10 +75,10 @@ public class MonthViewController extends BaseTimeLineController implements Initi
                 dayColumn.setStyle(dayColumn.getStyle() + "; -fx-background-color: #d0f0c0; -fx-opacity: 0.8;");
             }
 
+            tbl_timeline.setItems(FXCollections.observableArrayList(new Room()));
             tbl_timeline.getColumns().add(dayColumn);
         }
 
-        tbl_timeline.setItems(eventsList);
         updateOverlayWidth(tbl_timeline, ap_overlay);
     }
 
@@ -86,11 +88,12 @@ public class MonthViewController extends BaseTimeLineController implements Initi
 
         TableRow<?> row = (TableRow<?>) tbl_timeline.lookup(".table-row-cell");
         ROW_HEIGHT = row.getHeight();
+        updateOverlayHeight(tbl_eventName, ap_overlay);
 
         LocalDate firstDayOfMonth = timelineStartDate.withDayOfMonth(1);
         Map<String, Integer> roomIndexMap = new HashMap<>();
         for (int i = 0; i < roomList.size(); i++) {
-            roomIndexMap.put(roomList.get(i).getRoomName(), i);
+            roomIndexMap.put(roomList.get(i).getRoomNumber(), i);
         }
 
         for (BookRoom event : eventsList) {

@@ -1,13 +1,15 @@
 package com.example.calender.controller.timeLine;
 
 import com.example.calender.models.BookRoom;
-import com.example.calender.models.Room;
-import com.example.calender.service.RoomService;
 import com.example.calender.service.TimeLineByDayService;
 import com.example.calender.utils.FormatColor;
+import com.vvg.pos.api.HotelClient;
+import com.vvg.pos.bean.Room;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
@@ -25,10 +27,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class ActionHandler {
@@ -43,14 +42,48 @@ public abstract class ActionHandler {
 
     // Prevent infinite update loops when syncing scrollbars
     private boolean isHorizontallySyncing = false;
+    public Service<Void> loadDataService = null;
     private final TimeLineByDayService timeLineByDayService = TimeLineByDayService.getInstance();
-    private final RoomService roomService = RoomService.getInstance();
-
     protected abstract void refreshTimelineView();
 
     protected void loadEvents() {
         eventsList.setAll(timeLineByDayService.getAllEvents());
-        roomList.setAll(roomService.getAllRooms());
+        setupLoadData();
+    }
+
+    public void setupLoadData() {
+        loadDataService = new Service<Void>() {
+            @Override
+            protected Task<Void> createTask() {
+                return new Task<Void>() {
+                    @Override
+                    protected Void call() throws Exception {
+                        roomList.setAll(HotelClient.searchAllRoom(12));
+                        return null;
+                    }
+                };
+            }
+        };
+
+        loadDataService.setOnFailed(event -> {
+            Throwable e = loadDataService.getException();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText(null);
+            alert.setContentText(e.getMessage());
+            alert.showAndWait();
+        });
+
+        if (loadDataService.isRunning()) {
+            loadDataService.cancel();
+            loadDataService.setOnCancelled(event -> {
+                loadDataService.reset();
+                loadDataService.start();
+            });
+        } else {
+            loadDataService.reset();
+            loadDataService.start();
+        }
     }
 
     // ======================
@@ -90,7 +123,7 @@ public abstract class ActionHandler {
                 FXCollections.observableArrayList("pending", "approved", "rejected"));
         statusComboBox.getSelectionModel().select("pending");
         ComboBox<String> roomComboBox = new ComboBox<>(FXCollections.observableArrayList(roomList.stream()
-                .map(Room::getRoomName)
+                .map(Room::getRoomNumber)
                 .collect(Collectors.toList())));
         DatePicker startDatePicker = new DatePicker();
         DatePicker endDatePicker = new DatePicker();
@@ -293,7 +326,7 @@ public abstract class ActionHandler {
         ColorPicker colorPicker = new ColorPicker(Color.LIGHTBLUE);
 
         ComboBox<String> roomComboBox = new ComboBox<>(FXCollections.observableArrayList(
-                roomList.stream().map(Room::getRoomName).collect(Collectors.toList())));
+                roomList.stream().map(Room::getRoomNumber).collect(Collectors.toList())));
         roomComboBox.getSelectionModel().selectFirst();
 
         ComboBox<String> statusComboBox = new ComboBox<>(FXCollections.observableArrayList(
@@ -529,7 +562,7 @@ public abstract class ActionHandler {
         // Xác định roomName mới dựa trên vị trí Y của eventPane
         int newRowIndex = (int) Math.round(eventPane.getLayoutY() / ROW_HEIGHT);
         String newRoomName = (newRowIndex >= 0 && newRowIndex < roomList.size())
-                ? roomList.get(newRowIndex).getRoomName()
+                ? roomList.get(newRowIndex).getRoomNumber()
                 : event.getRoomName();
 
         // Tính offset ngày dựa theo firstDayOfMonth giống drawEvents
@@ -648,6 +681,12 @@ public abstract class ActionHandler {
         overlay.setPrefWidth(totalWidth);
     }
 
+    protected void updateOverlayHeight(TableView<?> tableView, Pane overlay) {
+        int rowCount = tableView.getItems().size(); // Get the number of rows
+        double totalHeight = rowCount * ROW_HEIGHT; // Calculate total height
+        overlay.setPrefHeight(totalHeight); // Set overlay height
+    }
+
     protected double snapToGrid(double value) {
         return Math.round(value) * (double) 1;
     }
@@ -736,5 +775,18 @@ public abstract class ActionHandler {
             }
             isHorizontallySyncing = false;
         });
+    }
+
+    protected void syncTableRowCount(TableView<?> tblEventName, TableView<?> tblTimeline) {
+        int eventNameRowCount = tblEventName.getItems().size();
+        int timelineRowCount = tblTimeline.getItems().size();
+
+        if (timelineRowCount < eventNameRowCount) {
+            for (int i = timelineRowCount; i < eventNameRowCount; i++) {
+                tblTimeline.getItems().add(null); // Add empty rows
+            }
+        } else if (timelineRowCount > eventNameRowCount) {
+            tblTimeline.getItems().remove(eventNameRowCount, timelineRowCount); // Remove excess rows
+        }
     }
 }

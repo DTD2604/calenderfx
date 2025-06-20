@@ -1,7 +1,6 @@
 package com.example.calender.controller.timeLine;
 
-import com.example.calender.models.BookRoom;
-import com.example.calender.models.Room;
+import com.vvg.pos.bean.Room;
 import javafx.animation.PauseTransition;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -22,7 +21,7 @@ import java.util.Arrays;
 public abstract class BaseTimeLineController extends ActionHandler {
 
     @FXML
-    protected TableView<BookRoom> tbl_timeline;
+    protected TableView<Room> tbl_timeline;
     @FXML
     protected TableView<Room> tbl_eventName;
     @FXML
@@ -48,8 +47,10 @@ public abstract class BaseTimeLineController extends ActionHandler {
     @Override
     protected void refreshTimelineView() {
         super.loadEvents(); // Luôn load lại events khi refresh
-        setupTimelineColumns();
-        drawEvents();
+        loadDataService.setOnSucceeded(event -> {
+            setupTimelineColumns();
+            drawEvents();
+        });
         tbl_eventName.refresh();
         tbl_timeline.refresh();
     }
@@ -63,10 +64,12 @@ public abstract class BaseTimeLineController extends ActionHandler {
         tbl_eventName.getColumns().clear();
 
         col_nameEvent.setText("Phòng");
-        col_nameEvent.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getRoomName()));
+        col_nameEvent.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getRoomNumber()));
         tbl_eventName.getColumns().addAll(Arrays.asList(col_stt, col_nameEvent));
-        // Hiển thị danh sách phòng
-        tbl_eventName.setItems(FXCollections.observableArrayList(roomList));
+
+        // Hiển thị một dòng trống trước khi load dữ liệu
+        tbl_eventName.setItems(FXCollections.observableArrayList(new Room()));
+
         col_stt.setCellFactory(col -> new TableCell<Room, Number>() {
             @Override
             protected void updateItem(Number item, boolean empty) {
@@ -92,6 +95,15 @@ public abstract class BaseTimeLineController extends ActionHandler {
 
         // Đồng bộ hóa thanh cuộn dọc của overlayPane với scrollPane
         syncVerticalScrollBar(tbl_timeline, scr_main);
+    }
+
+    public void loadView() {
+        loadDataService.setOnSucceeded(event -> {
+            tbl_eventName.setItems(FXCollections.observableArrayList(roomList));
+            tbl_timeline.setItems(FXCollections.observableArrayList(roomList));
+            syncTableRowCount(tbl_eventName, tbl_timeline);
+            drawEvents();
+        });
     }
 
     public abstract void setupTimelineColumns();

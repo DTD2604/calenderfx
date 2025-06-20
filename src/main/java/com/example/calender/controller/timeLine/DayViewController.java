@@ -1,6 +1,7 @@
 package com.example.calender.controller.timeLine;
 
 import com.example.calender.models.BookRoom;
+import com.vvg.pos.bean.Room;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.Initializable;
@@ -22,12 +23,12 @@ public class DayViewController extends BaseTimeLineController implements Initial
     public void initialize(URL location, ResourceBundle resources) {
         loadEvents();
         setupTables();
+        loadView();
 
         Platform.runLater(() -> {
             PauseTransition pause = new PauseTransition(Duration.millis(50));
             pause.setOnFinished(e -> {
                 setupBindingsAndListeners();
-                drawEvents();
             });
             pause.play();
         });
@@ -40,7 +41,7 @@ public class DayViewController extends BaseTimeLineController implements Initial
 
         for (int hour = 0; hour < HOURS_PER_DAY; hour++) {
             String hourLabel = String.format("%02d:00", hour);
-            TableColumn<BookRoom, Void> hourColumn = new TableColumn<>(hourLabel);
+            TableColumn<Room, Void> hourColumn = new TableColumn<>(hourLabel);
             hourColumn.setPrefWidth(CELL_WIDTH);
             hourColumn.setSortable(false);
 
@@ -61,7 +62,6 @@ public class DayViewController extends BaseTimeLineController implements Initial
             tbl_timeline.getColumns().add(hourColumn);
         }
 
-        tbl_timeline.setItems(eventsList);
         updateOverlayWidth(tbl_timeline, ap_overlay);
     }
 
@@ -70,10 +70,11 @@ public class DayViewController extends BaseTimeLineController implements Initial
         ap_overlay.getChildren().clear();
         TableRow<?> row = (TableRow<?>) tbl_timeline.lookup(".table-row-cell");
         ROW_HEIGHT = row.getHeight();
+        updateOverlayHeight(tbl_eventName, ap_overlay);
 
         Map<String, Integer> roomIndexMap = new HashMap<>();
         for (int i = 0; i < roomList.size(); i++) {
-            roomIndexMap.put(roomList.get(i).getRoomName(), i);
+            roomIndexMap.put(roomList.get(i).getRoomNumber(), i);
         }
 
         for (BookRoom event : eventsList) {

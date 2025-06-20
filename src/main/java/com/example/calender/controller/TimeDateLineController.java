@@ -32,7 +32,6 @@ public class TimeDateLineController extends ActionHandler implements Initializab
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        loadEvents();
         configureControls();
         refreshTimelineView();
     }

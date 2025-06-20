@@ -25,7 +25,7 @@
         <StackPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <StackPane>
                 <TableView fx:id="tbl_timeline" prefHeight="600.0" style="-fx-focus-traversable: false;" />
-                <ScrollPane fx:id="scr_main" hbarPolicy="ALWAYS" vbarPolicy="ALWAYS">
+                <ScrollPane fx:id="scr_main" hbarPolicy="ALWAYS" vbarPolicy="ALWAYS" >
                     <AnchorPane>
                         <Pane fx:id="ap_overlay" />
                     </AnchorPane>

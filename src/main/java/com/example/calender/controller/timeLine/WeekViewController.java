@@ -1,6 +1,7 @@
 package com.example.calender.controller.timeLine;
 
 import com.example.calender.models.BookRoom;
+import com.vvg.pos.bean.Room;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.Initializable;
@@ -24,12 +25,12 @@ public class WeekViewController extends BaseTimeLineController implements Initia
     public void initialize(URL location, ResourceBundle resources) {
         loadEvents();
         setupTables();
+        loadView();
 
         Platform.runLater(() -> {
             PauseTransition pause = new PauseTransition(Duration.millis(50));
             pause.setOnFinished(e -> {
                 setupBindingsAndListeners();
-                drawEvents();
             });
             pause.play();
         });
@@ -45,7 +46,7 @@ public class WeekViewController extends BaseTimeLineController implements Initia
             LocalDate day = timelineStartDate.plusDays(i);
             String dayLabel = day.getDayOfWeek().toString().substring(0, 3) + " " + day.getDayOfMonth() + "/"
                     + day.getMonthValue();
-            TableColumn<BookRoom, Void> dayColumn = new TableColumn<>(dayLabel);
+            TableColumn<Room, Void> dayColumn = new TableColumn<>(dayLabel);
             dayColumn.setPrefWidth(CELL_WIDTH);
             dayColumn.setSortable(false);
 
@@ -74,7 +75,6 @@ public class WeekViewController extends BaseTimeLineController implements Initia
             tbl_timeline.getColumns().add(dayColumn);
         }
 
-        tbl_timeline.setItems(eventsList);
         updateOverlayWidth(tbl_timeline, ap_overlay);
     }
 
@@ -86,7 +86,7 @@ public class WeekViewController extends BaseTimeLineController implements Initia
 
         Map<String, Integer> roomIndexMap = new HashMap<>();
         for (int i = 0; i < roomList.size(); i++) {
-            roomIndexMap.put(roomList.get(i).getRoomName(), i);
+            roomIndexMap.put(roomList.get(i).getRoomNumber(), i);
         }
 
         for (BookRoom event : eventsList) {
